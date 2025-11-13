@@ -1,8 +1,13 @@
 import React from 'react'
+import Transactions from './Transactions'
+import TransactionDashboard from './TransactionDashboard'
 
 const History = () => {
   return (
-    <div>History</div>
+    <div>
+      <Transactions />
+      <TransactionDashboard/>
+    </div>
   )
 }
 

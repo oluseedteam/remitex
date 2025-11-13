@@ -1,6 +1,6 @@
 import React from "react";
 
-const AccountDetails = () => {
+const AccountDetails = ({setCurrentStep}) => {
   return (
     <div className="grid place-content-center mt-8 px-4">
       {/* Header Section */}
@@ -78,6 +78,7 @@ const AccountDetails = () => {
         {/* Submit Button */}
         <button
           type="submit"
+          onClick={() => setCurrentStep(3)}
           className="w-full bg-[#0328EE] text-white py-2 rounded-lg font-semibold hover:bg-[#021fc1] transition-all"
           style={{ fontFamily: "Outfit" }}
         >

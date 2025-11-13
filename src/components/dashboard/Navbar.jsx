@@ -2,7 +2,7 @@ import React from "react";
 import { Bell } from "lucide-react";
 import { HiOutlineMenu } from "react-icons/hi";
 // import { FaBars } from "react-icons/fa";
-import user from "../../assets/android.png";
+import user from "../../assets/Avatar.png";
 
 const Navbar = ({ toggleSidebar }) => {
   return (

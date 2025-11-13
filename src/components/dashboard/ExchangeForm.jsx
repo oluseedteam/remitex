@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Select from "react-select";
 import CurrencyFlag from "react-currency-flags";
 
-const ExchangeForm = () => {
+const ExchangeForm = ({ setCurrentStep }) => {
   const [amount, setAmount] = useState("");
   const [converted, setConverted] = useState("");
   const [fromCurrency, setFromCurrency] = useState(null);
@@ -93,6 +93,7 @@ const ExchangeForm = () => {
 
         {/* Submit Button */}
         <button
+          onClick={() => setCurrentStep(2)}
           type="submit"
           className="w-full bg-[#0328EE] text-white py-2 rounded-lg font-semibold hover:bg-[#021fc1] transition-all"
         >
