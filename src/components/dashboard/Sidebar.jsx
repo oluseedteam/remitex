@@ -2,13 +2,14 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/android.png";
+import Logo from "../../assets/remlogo.png";
 import { FaExchangeAlt, FaHistory, FaSignOutAlt } from "react-icons/fa";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const menu = [
-    { name: "Exchange", path: "/exchange", icon: <FaExchangeAlt /> },
-    { name: "History", path: "/history", icon: <FaHistory /> },
-    { name: "Logout", path: "/logout", icon: <FaSignOutAlt /> },
+    { name: "Exchange", path: "/dashboard/exchange", icon: <FaExchangeAlt /> },
+    { name: "History", path: "/dashboard/history", icon: <FaHistory /> },
+    { name: "Logout", path: "/dashboard/logout", icon: <FaSignOutAlt /> },
   ];
 
   return (
@@ -16,7 +17,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       {/* Desktop Sidebar (always visible) */}
       <aside className="hidden md:flex flex-col w-64 bg-[#1D1F1A] text-white shadow-lg py-6">
         <div className="flex items-center justify-center mb-10 px-4">
-          <img src={logo} alt="Dashboard Logo" className="w-40" />
+          <img src={Logo} alt="Dashboard Logo" className="w-40" />
         </div>
         <nav>
           {menu.map((item) => (
