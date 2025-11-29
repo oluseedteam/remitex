@@ -5,8 +5,8 @@ import Exchange from './components/dashboard/Exchange'
 import History from './components/dashboard/History'
 import Logout from './components/dashboard/Logout'
 import Homepage from './pages/HomePage'
-import About from './pages/about'
-import Contact from './pages/contact'
+import About from './pages/About'
+import Contact from './pages/Contact'
 
 
 const App = () => (

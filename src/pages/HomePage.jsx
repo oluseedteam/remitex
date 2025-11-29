@@ -20,6 +20,7 @@ import guy from "../assets/mann.avif";
 import { Button } from "../components/button";
 import { download, news, testimonials } from "../data";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 
 // Section Layout Component
@@ -39,7 +40,7 @@ SectionLayout.propTypes = {
 
 
 const Homepage = () => {
-
+  const navigate = useNavigate();
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   return (
@@ -90,7 +91,7 @@ const Homepage = () => {
           className="mt-4"
         >
           <Button
-            clickHandler={() => navigate("/")}
+            clickHandler={() => navigate("/dashboard")}
             title="Get Started"
             type="light"
             _style="py-4"
@@ -158,7 +159,7 @@ const Homepage = () => {
       </motion.p>
 
       {/* Content Container */}
-      <div className="lg:flex gap-6">
+      <div className="lg:flex gap-10">
         {/* Card 1: Send & Receive */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -175,7 +176,7 @@ const Homepage = () => {
           />
           <p className="text-[18px] text-white font-bold uppercase">Send & Receive</p>
           <p className="text-white text-md" style={{ lineHeight: "1.5rem" }}>
-            Send & Receive money with ease on our platform using the Android and iOS App.
+            Send & Receive money with ease on our platform using the web.
           </p>
         </motion.div>
 
@@ -205,7 +206,7 @@ const Homepage = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.2 }}
           transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          className="grid md:flex items-end justify-end lg:grid gap-8"
+          className="grid mt-5 md:flex items-end justify-end lg:grid gap-8"
         >
           <div className="h-fit bg-[#0328ee] px-4 py-8 rounded-3xl mx-auto w-fit">
             <motion.img
@@ -335,7 +336,7 @@ const Homepage = () => {
             Send and receive money globally with ease and make international transactions in a few clicks.
           </p>
           <Button
-            clickHandler={() => navigate("/")}
+            clickHandler={() => navigate("/dashboard")}
             title="Get Started"
             type="light"
             _style="py-4"
@@ -514,7 +515,7 @@ const Homepage = () => {
 
 
 
-      <section className="mt-12 md:mt-24 mb-8 px-6 md:px-32" style={{fontFamily: 'Dm Sans'}}>
+      {/* <section className="mt-12 md:mt-24 mb-8 px-6 md:px-32" style={{fontFamily: 'Dm Sans'}}>
         <p className="text-[#0328ee] font-bold text-[20px] md:text-[40px]">Download our app</p>
 
         <div className="md:flex gap-24 ">
@@ -534,7 +535,7 @@ const Homepage = () => {
 
 
         </div>
-      </section>
+      </section> */}
 
 
     </Layout>
