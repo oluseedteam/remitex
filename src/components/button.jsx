@@ -10,7 +10,7 @@ export const Button = ({ title, clickHandler, type, _style }) => {
   return (
     <button
       onClick={clickHandler}
-      className={` ${buttonType[type]} font-medium rounded-3xl border-none focus:outline-none ${_style}}`}
+      className={` ${buttonType[type]} cursor-pointer font-medium rounded-3xl border-none focus:outline-none ${_style}}`}
     >
       {title}
     </button>

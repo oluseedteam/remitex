@@ -41,7 +41,7 @@ const ExchangeForm = ({ setCurrentStep }) => {
           style={{ fontFamily: "DM Sans" }}
           className="text-2xl font-semibold text-center mb-2"
         >
-          Currency Exchange
+          Transfer
         </h1>
 
         {/* From Currency Section */}

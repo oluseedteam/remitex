@@ -7,15 +7,15 @@ import { FaExchangeAlt, FaHistory, FaSignOutAlt } from "react-icons/fa";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const menu = [
-    { name: "Exchange", path: "/dashboard/exchange", icon: <FaExchangeAlt /> },
-    { name: "History", path: "/dashboard/history", icon: <FaHistory /> },
+    { name: "Transfer", path: "/dashboard/exchange", icon: <FaExchangeAlt /> },
+    { name: "Transaction History", path: "/dashboard/history", icon: <FaHistory /> },
     { name: "Logout", path: "/dashboard/logout", icon: <FaSignOutAlt /> },
   ];
 
   return (
     <>
       {/* Desktop Sidebar (always visible) */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#1D1F1A] text-white shadow-lg py-6">
+      <aside className="hidden md:flex flex-col w-64 bg-[#0212c2] text-white shadow-lg py-6">
         <div className="flex items-center justify-center mb-10 px-4">
           <img src={Logo} alt="Dashboard Logo" className="w-40" />
         </div>

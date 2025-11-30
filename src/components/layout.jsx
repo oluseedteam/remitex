@@ -5,7 +5,7 @@ import Footer from "./footer"
 
 
 
-const Layout = ({ children, _style, _space = "mt-20 md:mt-28" }) => {
+const Layout = ({ children, _style, _space = "mt-10 md:mt-10" }) => {
   return (
     <>
       <Navbar />

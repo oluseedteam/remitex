@@ -57,7 +57,7 @@ const Navbar = () => {
           <Button
             clickHandler={() => navigate("/dashboard")}
             title="Signup / Login"
-            type="dark"
+            type="light"
           />
         </nav>
       </header>
