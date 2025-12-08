@@ -12,6 +12,8 @@ import Users from './components/admin/pages/Users'
 import Transactions from './components/admin/pages/Transactions'
 import Settings from './components/admin/pages/Settings'
 import AdminDashboard from './components/admin/pages/AdminDashboard'
+import Register from './pages/Register'
+import Login from './pages/Login'
 
 
 const App = () => (
@@ -21,6 +23,8 @@ const App = () => (
       <Route index element={<Homepage />} />
       <Route path='/about' element={<About />} />
       <Route path='/contact' element={<Contact />} />
+      <Route path='/register' element={<Register/>} />
+      <Route path='/login' element={<Login/>} />
 
       <Route path="/dashboard" element={<Dashboard />}>
         <Route index element={<Exchange />} />

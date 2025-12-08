@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import CurrencyFlag from "react-currency-flags";
 
-const ExchangeForm = ({ setCurrentStep }) => {
+const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
   const [amount, setAmount] = useState("");
-  const [converted, setConverted] = useState("");
   const [fromCurrency, setFromCurrency] = useState(null);
   const [toCurrency, setToCurrency] = useState(null);
+  const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingRoutes, setLoadingRoutes] = useState(true);
 
-  const options = [
+  const token = localStorage.getItem("token");
+
+  const currencyOptions = [
     { value: "USD", label: "USD" },
     { value: "NGN", label: "NGN" },
     { value: "GBP", label: "GBP" },
@@ -16,14 +20,120 @@ const ExchangeForm = ({ setCurrentStep }) => {
     { value: "JPY", label: "JPY" },
   ];
 
-  const handleSubmit = (e) => {
+  // ---------------------------------------------------
+  // 1️⃣ FETCH TRANSFER ROUTES FROM BACKEND
+  // ---------------------------------------------------
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const res = await fetch("https://api.remitex.co/api/transfer-routes", {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        console.log("ROUTES:", data);
+
+        if (res.ok && Array.isArray(data.data)) {
+          setRoutes(data.data);
+        } else {
+          alert("Could not load transfer routes.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error loading transfer routes.");
+      } finally {
+        setLoadingRoutes(false);
+      }
+    };
+
+    fetchRoutes();
+  }, [token]);
+
+  // ---------------------------------------------------
+  // 2️⃣ FIND THE ROUTE BASED ON SELECTED CURRENCIES
+  // ---------------------------------------------------
+  const getRouteId = () => {
+    if (!fromCurrency || !toCurrency) return null;
+
+    const route = routes.find(
+      (r) =>
+        r.source_currency === fromCurrency.value &&
+        r.destination_currency === toCurrency.value
+    );
+
+    return route ? route.id : null;
+  };
+
+  // ---------------------------------------------------
+  // 3️⃣ HANDLE FORM SUBMIT
+  // ---------------------------------------------------
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (fromCurrency && toCurrency && amount) {
-      setConverted((amount * 1500).toFixed(2)); // mock conversion
+
+    if (!amount || !fromCurrency || !toCurrency) {
+      alert("Please fill out all fields");
+      return;
+    }
+
+    const routeId = getRouteId();
+
+    if (!routeId) {
+      alert("No valid transfer route for the selected currencies.");
+      return;
+    }
+
+    console.log("FINAL ROUTE ID SENT:", routeId);
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "https://api.remitex.co/api/transfers/initiate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            transfer_route_id: routeId,
+            amount: Number(amount),
+          }),
+        }
+      );
+
+      const data = await response.json();
+      console.log("INITIATION RESPONSE:", data);
+
+      if (!response.ok) {
+        alert(
+          data?.message ||
+            data?.errors?.transfer_route_id?.[0] ||
+            "Transfer initiation failed"
+        );
+        return;
+      }
+
+      // Save data for next step
+      setTransferData(data.data);
+
+      // Go to next page
+      setCurrentStep(2);
+    } catch (err) {
+      console.error(err);
+      alert("Network error, please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Custom dropdown option (shows flag + label)
+  // ---------------------------------------------------
+  // Currency Option Renderer
+  // ---------------------------------------------------
   const customOption = ({ label, value }) => (
     <div className="flex items-center gap-2">
       <CurrencyFlag currency={value} size="sm" />
@@ -44,61 +154,57 @@ const ExchangeForm = ({ setCurrentStep }) => {
           Transfer
         </h1>
 
-        {/* From Currency Section */}
-        <div style={{ fontFamily: "Outfit" }} className="space-y-2">
-          <label className="text-sm font-medium">From</label>
-          <Select
-            options={options}
-            value={fromCurrency}
-            onChange={setFromCurrency}
-            placeholder="Select currency"
-            formatOptionLabel={customOption}
-            className="text-sm"
-          />
+        {loadingRoutes ? (
+          <p className="text-center text-sm">Loading routes...</p>
+        ) : (
+          <>
+            {/* From Currency */}
+            <div className="space-y-2" style={{ fontFamily: "Outfit" }}>
+              <label className="text-sm font-medium">From</label>
+              <Select
+                options={currencyOptions}
+                value={fromCurrency}
+                onChange={setFromCurrency}
+                placeholder="Select currency"
+                formatOptionLabel={customOption}
+              />
 
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount"
-            className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-          />
-        </div>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-sm"
+              />
+            </div>
 
-        {/* Rate Info */}
-        <p className="bg-[#E4F6F2] text-sm text-center py-2 rounded-lg font-medium">
-          Rate: #1500 - $1
-        </p>
+            {/* Rate Placeholder */}
+            <p className="bg-[#E4F6F2] text-sm text-center py-2 rounded-lg font-medium">
+              Select currencies to see rate
+            </p>
 
-        {/* To Currency Section */}
-        <div style={{ fontFamily: "Outfit" }} className="space-y-2">
-          <label className="text-sm font-medium">To</label>
-          <Select
-            options={options}
-            value={toCurrency}
-            onChange={setToCurrency}
-            placeholder="Select target currency"
-            formatOptionLabel={customOption}
-            className="text-sm"
-          />
+            {/* To Currency */}
+            <div className="space-y-2" style={{ fontFamily: "Outfit" }}>
+              <label className="text-sm font-medium">To</label>
+              <Select
+                options={currencyOptions}
+                value={toCurrency}
+                onChange={setToCurrency}
+                placeholder="Select currency"
+                formatOptionLabel={customOption}
+              />
+            </div>
 
-          <input
-            type="text"
-            value={converted}
-            readOnly
-            placeholder="Converted amount"
-            className="w-full p-2 rounded-lg border border-gray-300 bg-gray-100 text-gray-600 text-sm"
-          />
-        </div>
-
-        {/* Submit Button */}
-        <button
-          onClick={() => setCurrentStep(2)}
-          type="submit"
-          className="w-full bg-[#0328EE] text-white py-2 rounded-lg font-semibold hover:bg-[#021fc1] transition-all"
-        >
-          Continue
-        </button>
+            {/* Submit */}
+            <button
+              type="submit"
+              className="w-full bg-[#0328EE] text-white py-2 rounded-lg font-semibold hover:bg-[#021fc1] transition-all"
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Continue"}
+            </button>
+          </>
+        )}
       </form>
     </div>
   );
