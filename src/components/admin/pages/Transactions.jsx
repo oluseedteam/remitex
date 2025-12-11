@@ -1,307 +1,489 @@
-import React, { useState } from 'react';
-import { FiFilter, FiDollarSign, FiDownload, FiSearch, FiCalendar, FiTrendingUp, FiTrendingDown, FiArrowUpRight, FiArrowDownRight, FiMoreVertical, FiEye, FiRefreshCw } from "react-icons/fi";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import React, { useState, useEffect } from "react";
 
 const Transactions = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('All Status');
-  const [dateRange, setDateRange] = useState('This Month');
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [newStatus, setNewStatus] = useState("");
+  const [adminNotes, setAdminNotes] = useState("");
 
-  const transactions = [
-    { id: 1, user: "John Doe", email: "john@gmail.com", amount: "₦50,000", type: "Credit", status: "Completed", date: "Jan 12, 2025", time: "10:30 AM", method: "Bank Transfer" },
-    { id: 2, user: "Mary Okoro", email: "mary@gmail.com", amount: "₦7,200", type: "Debit", status: "Pending", date: "Jan 10, 2025", time: "02:15 PM", method: "Card Payment" },
-    { id: 3, user: "Kelvin Edge", email: "kelvin@outlook.com", amount: "₦89,000", type: "Credit", status: "Failed", date: "Jan 8, 2025", time: "04:45 PM", method: "Bank Transfer" },
-    { id: 4, user: "Sarah Musa", email: "sarah@yahoo.com", amount: "₦22,500", type: "Debit", status: "Completed", date: "Jan 5, 2025", time: "09:20 AM", method: "Card Payment" },
-    { id: 5, user: "David Chen", email: "david@gmail.com", amount: "₦135,000", type: "Credit", status: "Completed", date: "Jan 4, 2025", time: "11:00 AM", method: "Bank Transfer" },
-    { id: 6, user: "Emma Wilson", email: "emma@yahoo.com", amount: "₦15,800", type: "Debit", status: "Completed", date: "Jan 3, 2025", time: "03:30 PM", method: "Wallet" },
-  ];
+  const fetchTransactions = async () => {
+    setLoading(true);
+    setError("");
 
-  const chartData = [
-    { day: "Mon", amount: 45000 },
-    { day: "Tue", amount: 72000 },
-    { day: "Wed", amount: 58000 },
-    { day: "Thu", amount: 89000 },
-    { day: "Fri", amount: 95000 },
-    { day: "Sat", amount: 67000 },
-    { day: "Sun", amount: 43000 },
-  ];
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      const params = new URLSearchParams();
+      if (dateFrom) params.append("date_from", dateFrom);
+      if (dateTo) params.append("date_to", dateTo);
+      if (statusFilter) params.append("status", statusFilter);
 
-  const filteredTransactions = transactions.filter(tx => {
-    const matchesSearch = tx.user.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         tx.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === 'All Status' || tx.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
+      const response = await fetch(
+        `https://api.remitex.co/api/admin/transactions?${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  const totalAmount = transactions.reduce((sum, tx) => sum + parseInt(tx.amount.replace(/[₦,]/g, '')), 0);
-  const completedCount = transactions.filter(tx => tx.status === 'Completed').length;
-  const pendingCount = transactions.filter(tx => tx.status === 'Pending').length;
-  const failedCount = transactions.filter(tx => tx.status === 'Failed').length;
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || "Failed to fetch");
+
+      const transactionsArray = Array.isArray(data.data)
+        ? data.data
+        : Array.isArray(data.data?.transactions)
+        ? data.data.transactions
+        : [];
+
+      setTransactions(transactionsArray);
+    } catch (err) {
+      setError(err.message || "Error fetching transactions");
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [statusFilter, dateFrom, dateTo]);
+
+  const handleUpdateStatus = async (transactionId) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      const response = await fetch(
+        `https://api.remitex.co/api/admin/transactions/${transactionId}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus, admin_notes: adminNotes }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to update");
+
+      alert("Transaction status updated successfully!");
+      fetchTransactions();
+      setSelectedTransaction(null);
+      setNewStatus("");
+      setAdminNotes("");
+    } catch (err) {
+      alert(err.message || "Error updating transaction");
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      completed: "bg-green-100 text-green-700 border-green-200",
+      failed: "bg-red-100 text-red-700 border-red-200",
+      cancelled: "bg-gray-100 text-gray-700 border-gray-200",
+    };
+    return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-700 border-gray-200";
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'pending':
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'failed':
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'cancelled':
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Transactions</h1>
-          <p className="text-gray-500">Monitor and manage all financial transactions</p>
-        </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+        
+        * {
+          font-family: 'DM Sans', sans-serif;
+        }
+        
+        .font-outfit {
+          font-family: 'Outfit', sans-serif;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+        
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+          background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+          background-size: 1000px 100%;
+        }
+      `}</style>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <FiDollarSign className="text-white text-xl" />
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-purple-50 to-blue-50 p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* HEADER */}
+          <div className="mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h1 className="text-4xl font-bold font-outfit text-blue-700 bg-clip-text mb-2">
+                  Transactions
+                </h1>
+                <p className="text-slate-600 text-sm">
+                  Monitor and manage all transaction activities
+                </p>
               </div>
-              <span className="text-green-500 text-sm font-semibold flex items-center gap-1">
-                <FiTrendingUp /> +12.5%
-              </span>
-            </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Total Volume</p>
-            <h3 className="text-2xl font-bold text-gray-900">₦{(totalAmount / 1000).toFixed(1)}K</h3>
-          </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-linear-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                <FiArrowDownRight className="text-white text-xl" />
+              <div className="flex items-center gap-3">
+                <div className="bg-white px-4 py-2 rounded-xl shadow-md border border-slate-200">
+                  <div className="text-xs text-slate-500 font-medium">Total Transactions</div>
+                  <div className="text-2xl font-bold font-outfit text-slate-900">{transactions.length}</div>
+                </div>
               </div>
-              <span className="text-green-500 text-sm font-semibold">Success</span>
             </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Completed</p>
-            <h3 className="text-2xl font-bold text-gray-900">{completedCount}</h3>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-linear-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
-                <FiRefreshCw className="text-white text-xl" />
-              </div>
-              <span className="text-yellow-500 text-sm font-semibold">Processing</span>
+          {/* FILTERS */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-slate-200">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <h2 className="text-lg font-semibold text-slate-900">Filter Transactions</h2>
             </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Pending</p>
-            <h3 className="text-2xl font-bold text-gray-900">{pendingCount}</h3>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-linear-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
-                <FiTrendingDown className="text-white text-xl" />
-              </div>
-              <span className="text-red-500 text-sm font-semibold">Failed</span>
-            </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Failed</p>
-            <h3 className="text-2xl font-bold text-gray-900">{failedCount}</h3>
-          </div>
-        </div>
-
-        {/* Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Weekly Transaction Volume</h2>
-              <p className="text-gray-500 text-sm mt-1">Last 7 days activity</p>
-            </div>
-            <select className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>Last 90 days</option>
-            </select>
-          </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis 
-                dataKey="day" 
-                stroke="#9ca3af"
-                style={{ fontSize: '14px' }}
-              />
-              <YAxis 
-                stroke="#9ca3af"
-                style={{ fontSize: '14px' }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-              <Bar 
-                dataKey="amount" 
-                fill="#2563eb" 
-                radius={[8, 8, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Filter Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700">Date From</label>
                 <input
-                  type="text"
-                  placeholder="Search by user name or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
                 />
               </div>
-            </div>
 
-            {/* Filters */}
-            <div className="flex gap-3 flex-wrap">
-              <select 
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option>All Status</option>
-                <option>Completed</option>
-                <option>Pending</option>
-                <option>Failed</option>
-              </select>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700">Date To</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
+                />
+              </div>
 
-              <select 
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white flex items-center gap-2"
-              >
-                <option>This Month</option>
-                <option>Last Month</option>
-                <option>Last 3 Months</option>
-                <option>This Year</option>
-              </select>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none appearance-none bg-white"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em',
+                    paddingRight: '2.5rem'
+                  }}
+                >
+                  <option value="">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
 
-              <button className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2 whitespace-nowrap">
-                <FiDownload /> Export
-              </button>
+              <div className="flex items-end">
+                <button
+                  onClick={fetchTransactions}
+                  className="w-full bg-linear-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Transactions Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">User</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Method</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date & Time</th>
-                  <th className="py-4 px-6 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
+          {/* LOADING STATE */}
+          {loading && (
+            <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mb-4"></div>
+              <p className="text-slate-600 font-medium">Loading transactions...</p>
+            </div>
+          )}
 
-              <tbody className="divide-y divide-gray-100">
-                {filteredTransactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                          {tx.user.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{tx.user}</p>
-                          <p className="text-sm text-gray-500">{tx.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-bold text-gray-900 text-lg">{tx.amount}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                        tx.type === "Credit" 
-                          ? "bg-green-100 text-green-700" 
-                          : "bg-blue-100 text-blue-700"
-                      }`}>
-                        {tx.type === "Credit" ? <FiArrowDownRight /> : <FiArrowUpRight />}
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm text-gray-600">{tx.method}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          tx.status === "Completed"
-                            ? "bg-green-100 text-green-700"
-                            : tx.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${
-                          tx.status === "Completed"
-                            ? "bg-green-500"
-                            : tx.status === "Pending"
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                        }`}></span>
-                        {tx.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
+          {/* ERROR STATE */}
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-6 shadow-md">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-700 font-medium">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* EMPTY STATE */}
+          {!loading && !error && transactions.length === 0 && (
+            <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+              <div className="w-20 h-20 mx-auto mb-4 bg-linear-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="text-slate-500 font-medium text-lg">No transactions found</p>
+              <p className="text-slate-400 text-sm mt-1">Try adjusting your filters or check back later</p>
+            </div>
+          )}
+
+          {/* TRANSACTION TABLE */}
+          {!loading && !error && transactions.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-linear-to-r from-purple-600 to-blue-600 text-white">
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">ID</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">User</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-200">
+                    {transactions.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-slate-50 transition-colors duration-150">
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-slate-100 text-slate-700">
+                            #{tx.id}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-linear-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold font-outfit text-sm">
+                              {(tx.user?.email || tx.user_id?.toString() || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-medium text-slate-900">{tx.user?.email || `User ${tx.user_id}`}</div>
+                              <div className="text-xs text-slate-500">ID: {tx.user_id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-slate-900 font-mono">${parseFloat(tx.amount || 0).toFixed(2)}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(tx.status)}`}>
+                            {getStatusIcon(tx.status)}
+                            {tx.status?.charAt(0).toUpperCase() + tx.status?.slice(1).toLowerCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-700">
+                          <div>{new Date(tx.created_at).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}</div>
+                          <div className="text-xs text-slate-500">
+                            {new Date(tx.created_at).toLocaleTimeString('en-US', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => {
+                              setSelectedTransaction(tx);
+                              setNewStatus(tx.status);
+                            }}
+                            className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium text-sm hover:underline transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Update
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* UPDATE STATUS MODAL */}
+          {selectedTransaction && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center p-4 z-50 animate-fadeIn">
+              <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl animate-slideUp">
+                <div className="bg-linear-to-r from-purple-600 to-blue-600 px-8 py-6 rounded-t-2xl">
+                  <h2 className="text-2xl font-bold font-outfit text-white">Update Transaction Status</h2>
+                  <p className="text-purple-100 text-sm mt-1">Modify the transaction details below</p>
+                </div>
+
+                <div className="p-8">
+                  {/* Transaction Details */}
+                  <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-200">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{tx.date}</p>
-                        <p className="text-xs text-gray-500">{tx.time}</p>
+                        <div className="text-xs text-slate-500 font-medium mb-1">Transaction ID</div>
+                        <div className="font-mono font-semibold text-slate-900">#{selectedTransaction.id}</div>
                       </div>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <FiMoreVertical className="text-gray-600" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <div>
+                        <div className="text-xs text-slate-500 font-medium mb-1">Current Status</div>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(selectedTransaction.status)}`}>
+                          {getStatusIcon(selectedTransaction.status)}
+                          {selectedTransaction.status?.charAt(0).toUpperCase() + selectedTransaction.status?.slice(1)}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500 font-medium mb-1">Amount</div>
+                        <div className="font-semibold text-slate-900">${parseFloat(selectedTransaction.amount || 0).toFixed(2)}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500 font-medium mb-1">User</div>
+                        <div className="font-medium text-slate-900 text-sm truncate">{selectedTransaction.user?.email || `User ${selectedTransaction.user_id}`}</div>
+                      </div>
+                    </div>
+                  </div>
 
-          {filteredTransactions.length === 0 && (
-            <div className="text-center py-12">
-              <FiDollarSign className="mx-auto text-gray-300 text-5xl mb-3" />
-              <p className="text-gray-500">No transactions found matching your filters.</p>
+                  {/* New Status */}
+                  <div className="space-y-2 mb-6">
+                    <label className="block text-sm font-semibold text-slate-700">
+                      New Status <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value)}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none appearance-none bg-white"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '1.5em 1.5em',
+                        paddingRight: '2.5rem'
+                      }}
+                    >
+                      <option value="">Select new status</option>
+                      <option value="pending">Pending</option>
+                      <option value="completed">Completed</option>
+                      <option value="failed">Failed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  {/* Admin Notes */}
+                  <div className="space-y-2 mb-6">
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Admin Notes <span className="text-slate-400 text-xs font-normal">(Optional)</span>
+                    </label>
+                    <textarea
+                      placeholder="Add any notes about this status change..."
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      maxLength={500}
+                      rows="4"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none resize-none"
+                    />
+                    <div className="text-xs text-slate-500 text-right">{adminNotes.length}/500 characters</div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
+                    <button
+                      onClick={() => {
+                        setSelectedTransaction(null);
+                        setNewStatus("");
+                        setAdminNotes("");
+                      }}
+                      className="px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-all"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      onClick={() => handleUpdateStatus(selectedTransaction.id)}
+                      disabled={!newStatus}
+                      className={`px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 ${
+                        newStatus
+                          ? 'bg-linear-to-r from-purple-600 to-blue-600 text-white hover:shadow-xl hover:scale-105'
+                          : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                      }`}
+                    >
+                      Update Status
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-gray-600">
-            Showing <span className="font-medium">{filteredTransactions.length}</span> of <span className="font-medium">{transactions.length}</span> transactions
-          </p>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-              Previous
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-              1
-            </button>
-            <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-              3
-            </button>
-            <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -14,10 +14,13 @@ const Sidebar = () => {
   const [open, setOpen] = useState(false);
 
   const links = [
-    { path: "/admin", label: "Dashboard", icon: <FiHome /> },
+    // { path: "/admin", label: "Dashboard", icon: <FiHome /> },
     { path: "/admin/users", label: "Users", icon: <FiUsers /> },
     { path: "/admin/transactions", label: "Transactions", icon: <FiDollarSign /> },
-    { path: "/admin/settings", label: "Settings", icon: <FiSettings /> },
+    // { path: "/admin/settings", label: "Settings", icon: <FiSettings /> },
+    { path: "/admin/countries", label: "Countries", icon: <FiBarChart2 /> },
+    { path: "/admin/deposit", label: "Deposit Accounts", icon: <FiBarChart2 /> },
+    { path : "/admin/transfer", label: "Transfer Routes", icon: <FiBarChart2 /> },
   ];
 
   return (
@@ -52,7 +55,7 @@ const Sidebar = () => {
           <FiX size={26} />
         </button>
 
-        <h1 className="text-3xl font-bold tracking-wide mb-10">Remitex Admin</h1>
+        <h1 className="text-3xl font-bold tracking-wide mb-10 font-DMSans">Remitex Admin</h1>
 
         <nav className="flex flex-col gap-4">
           {links.map(({ path, label, icon }) => (

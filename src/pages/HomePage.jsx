@@ -140,7 +140,7 @@ const Homepage = () => {
               transition={{ duration: 0.6, delay: 0.55, ease: "easeOut" }}
               className="mt-6"
             >
-              <Button clickHandler={() => navigate("/dashboard")} title="Get Started" type="light" _style="py-4 px-6" />
+              <Button clickHandler={() => navigate("/login")} title="Get Started" type="light" _style="py-4 px-6" />
             </motion.div>
           </div>
 
@@ -322,7 +322,7 @@ const Homepage = () => {
             <p className="text-lg font-light" style={{ lineHeight: "2rem" }}>
               Send and receive money globally with ease and make international transactions in a few clicks.
             </p>
-            <Button clickHandler={() => navigate("/dashboard")} title="Get Started" type="light" _style="py-4" />
+            <Button clickHandler={() => navigate("/register")} title="Get Started" type="light" _style="py-4" />
           </motion.div>
 
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 1.5, ease: "easeOut" }} className="hidden xl:block absolute -bottom-1 right-0">
@@ -335,7 +335,7 @@ const Homepage = () => {
         <div className="flex items-center justify-between mt-12 md:mt-24 px-6 lg:px-32">
           <p className="text-[#0328ee] font-bold text-[18px] md:text-[40px] ">What our Customers say?</p>
 
-          <Button clickHandler={() => navigate("/")} title="Get Started" type="blue" _style="py-4 " />
+          {/* <Button clickHandler={() => navigate("/")} title="Get Started" type="blue" _style="py-4 " /> */}
         </div>
 
         <section className="bg-linear-to-b from-white via-gray-100 to-gray-200 py-6">

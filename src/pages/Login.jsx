@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiMail, FiLock } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ const Login = () => {
       });
 
       const data = await response.json();
+      // console.log("LOGIN RESPONSE:", data)
 
       if (!response.ok) {
         setLoading(false);
@@ -30,14 +32,18 @@ const Login = () => {
         return;
       }
 
-      // Save token
+      // Save token & user data
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       setLoading(false);
 
-      // Redirect user
-      window.location.href = "/admin";  
+      if (data.user?.role === "admin") {
+        window.location.href = "/admin"; // Admin dashboard
+      } else {
+        window.location.href = "/dashboard"; // User dashboard
+      }
+
     } catch (err) {
       setLoading(false);
       setError("Network error. Try again.");
@@ -49,7 +55,7 @@ const Login = () => {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 relative">
 
         <p className="text-center text-gray-600 mb-6">
-          Login to access the  Dashboard
+          Login to access the Dashboard
         </p>
 
         {error && (
@@ -103,6 +109,12 @@ const Login = () => {
               "Login"
             )}
           </button>
+
+          <Link to="/register">
+            <p style={{fontFamily: 'Dm sans'}} className="text-center text-sm">
+              Don't have an account? <span className="text-blue-500">Register</span>
+            </p>
+          </Link>
         </form>
 
         <p className="text-center text-gray-500 mt-6 text-sm">

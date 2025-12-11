@@ -121,7 +121,7 @@ const Navbar = () => {
               <div className="w-full flex justify-center mt-3">
                 <Button
                   clickHandler={() => {
-                    navigate("/");
+                    navigate("/register");
                     setIsOpen(false);
                   }}
                   title="Signup/Login"

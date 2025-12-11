@@ -14,7 +14,9 @@ import Settings from './components/admin/pages/Settings'
 import AdminDashboard from './components/admin/pages/AdminDashboard'
 import Register from './pages/Register'
 import Login from './pages/Login'
-
+import CountriesPage from './components/admin/pages/CountriesPage'
+import DepositAccountsPage from './components/admin/pages/DepositAccountPage'
+import TransferRoutes from './components/admin/pages/TransferRoutes'
 
 const App = () => (
   <Router>
@@ -34,10 +36,13 @@ const App = () => (
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminDashboard />} />
+        <Route index element={<Users />} />
         <Route path="users" element=  {<Users />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="settings" element={<Settings />} />
+        <Route path='countries' element={<CountriesPage/>} />
+        <Route path='deposit' element={<DepositAccountsPage/>} />
+        <Route path='transfer' element={<TransferRoutes/>} /> 
       </Route>
 
     </Routes>
