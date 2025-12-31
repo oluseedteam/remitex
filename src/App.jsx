@@ -17,6 +17,10 @@ import Login from './pages/Login'
 import CountriesPage from './components/admin/pages/CountriesPage'
 import DepositAccountsPage from './components/admin/pages/DepositAccountPage'
 import TransferRoutes from './components/admin/pages/TransferRoutes'
+import ProfilePage from './components/dashboard/ProfilePage'
+import ForgotPassword from './pages/ForgotPassword'
+import ChangePassword from './components/dashboard/ChangePassword'
+import DashboardMain from './components/dashboard/DashboardMain'
 
 const App = () => (
   <Router>
@@ -27,12 +31,16 @@ const App = () => (
       <Route path='/contact' element={<Contact />} />
       <Route path='/register' element={<Register/>} />
       <Route path='/login' element={<Login/>} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       <Route path="/dashboard" element={<Dashboard />}>
         <Route index element={<Exchange />} />
         <Route path="/dashboard/exchange" element={<Exchange />} />
         <Route path="/dashboard/history" element={<History />} />
-        <Route path="dashboard/logout" element={<Logout />} />
+        <Route path="/dashboard/main" element={<DashboardMain />} />
+        <Route path="/dashboard/profile" element={<ProfilePage />} />
+        <Route path="/dashboard/password-reset" element={<ChangePassword />} />
+        <Route path="/dashboard/logout" element={<Logout />} />
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>

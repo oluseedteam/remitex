@@ -6,7 +6,7 @@ const History = () => {
   return (
     <div>
       <Transactions />
-      <TransactionDashboard/>
+      {/* <TransactionDashboard/> */}
     </div>
   )
 }

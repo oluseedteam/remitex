@@ -233,14 +233,14 @@ const Users = () => {
         }
       `}</style>
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 p-4 md:p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           
           {/* HEADER */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-bold font-outfit bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
+                <h1 className="text-4xl font-bold font-outfit bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                   Users Management
                 </h1>
                 <p className="text-slate-600 text-sm">
@@ -277,7 +277,7 @@ const Users = () => {
                 onClick={() => setTab(t)}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
                   tab === t
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg scale-105"
+                    ? "bg-gradient-to-r from-blue-600 cursor-pointer to-indigo-600 text-white shadow-lg scale-105"
                     : "bg-white text-slate-700 shadow-md hover:shadow-lg hover:scale-105 border border-slate-200"
                 }`}
               >
@@ -306,7 +306,7 @@ const Users = () => {
               <input
                 type="text"
                 placeholder="Search by name, email, or ID..."
-                className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none"
+                className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -339,7 +339,7 @@ const Users = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                    <tr className="bg-gradient-to-r from-blue-600 cursor-pointer to-indigo-600 text-white">
                       <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">User</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Email</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">User ID</th>

@@ -3,13 +3,18 @@ import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/android.png";
 import Logo from "../../assets/remlogo.png";
-import { FaExchangeAlt, FaHistory, FaSignOutAlt } from "react-icons/fa";
+import { FaDashcube, FaExchangeAlt, FaHistory, FaLock, FaSignOutAlt } from "react-icons/fa";
+import { FaPerson } from "react-icons/fa6";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const menu = [
+    {name: "Dashboard", path: "/dashboard/main", icon: <FaDashcube /> },
     { name: "Transfer", path: "/dashboard/exchange", icon: <FaExchangeAlt /> },
     { name: "Transaction History", path: "/dashboard/history", icon: <FaHistory /> },
+    { name: "Profile", path: "/dashboard/profile", icon: <FaPerson/> },
+    { name: "Password Reset", path: "/dashboard/password-reset", icon: <FaLock/> },
     { name: "Logout", path: "/dashboard/logout", icon: <FaSignOutAlt /> },
+
   ];
 
   return (

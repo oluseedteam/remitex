@@ -21,12 +21,12 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
   ];
 
   // ---------------------------------------------------
-  // 1️⃣ FETCH TRANSFER ROUTES FROM BACKEND
+  // 1️⃣ FETCH TRANSFER ROUTES FROM DASHBOARD
   // ---------------------------------------------------
   useEffect(() => {
     const fetchRoutes = async () => {
       try {
-        const res = await fetch("https://api.remitex.co/api/transfer-routes", {
+        const res = await fetch("https://api.remitex.co/api/dashboard", {
           headers: {
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
@@ -34,10 +34,10 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
         });
 
         const data = await res.json();
-        console.log("ROUTES:", data);
+        console.log("DASHBOARD DATA:", data);
 
-        if (res.ok && Array.isArray(data.data)) {
-          setRoutes(data.data);
+        if (res.ok && data.data?.transfer_routes) {
+          setRoutes(data.data.transfer_routes); // assign transfer routes
         } else {
           alert("Could not load transfer routes.");
         }
@@ -60,8 +60,8 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
 
     const route = routes.find(
       (r) =>
-        r.source_currency === fromCurrency.value &&
-        r.destination_currency === toCurrency.value
+        r.sending_country === fromCurrency.value &&
+        r.receiving_country === toCurrency.value
     );
 
     return route ? route.id : null;
@@ -79,13 +79,10 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
     }
 
     const routeId = getRouteId();
-
     if (!routeId) {
       alert("No valid transfer route for the selected currencies.");
       return;
     }
-
-    console.log("FINAL ROUTE ID SENT:", routeId);
 
     setLoading(true);
 
@@ -107,7 +104,7 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
       );
 
       const data = await response.json();
-      console.log("INITIATION RESPONSE:", data);
+      console.log("TRANSFER INITIATION RESPONSE:", data);
 
       if (!response.ok) {
         alert(
@@ -121,7 +118,7 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
       // Save data for next step
       setTransferData(data.data);
 
-      // Go to next page
+      // Go to next step/page
       setCurrentStep(2);
     } catch (err) {
       console.error(err);
@@ -175,6 +172,7 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Enter amount"
                 className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-sm"
+                min={0.01}
               />
             </div>
 
