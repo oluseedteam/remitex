@@ -8,7 +8,7 @@ import { FaPerson } from "react-icons/fa6";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const menu = [
-    {name: "Dashboard", path: "/dashboard/main", icon: <FaDashcube /> },
+    // {name: "Dashboard", path: "/dashboard/main", icon: <FaDashcube /> },
     { name: "Transfer", path: "/dashboard/exchange", icon: <FaExchangeAlt /> },
     { name: "Transaction History", path: "/dashboard/history", icon: <FaHistory /> },
     { name: "Profile", path: "/dashboard/profile", icon: <FaPerson/> },

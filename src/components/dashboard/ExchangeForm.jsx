@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Select from "react-select";
 import CurrencyFlag from "react-currency-flags";
 
@@ -6,88 +6,42 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
   const [amount, setAmount] = useState("");
   const [fromCurrency, setFromCurrency] = useState(null);
   const [toCurrency, setToCurrency] = useState(null);
-  const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingRoutes, setLoadingRoutes] = useState(true);
 
   const token = localStorage.getItem("token");
 
   const currencyOptions = [
-    { value: "USD", label: "USD" },
+    { value: "CAD", label: "CAD" },
     { value: "NGN", label: "NGN" },
-    { value: "GBP", label: "GBP" },
-    { value: "EUR", label: "EUR" },
-    { value: "JPY", label: "JPY" },
   ];
 
-  // ---------------------------------------------------
-  // 1️⃣ FETCH TRANSFER ROUTES FROM DASHBOARD
-  // ---------------------------------------------------
-  useEffect(() => {
-    const fetchRoutes = async () => {
-      try {
-        const res = await fetch("https://api.remitex.co/api/dashboard", {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  // TEMP routes (must match backend IDs)
+  const routes = [
+    { id: 1, from: "NGN", to: "CAD" },
+    { id: 2, from: "CAD", to: "NGN" },
+  ];
 
-        const data = await res.json();
-        console.log("DASHBOARD DATA:", data);
+  const selectedRoute = routes.find(
+    (r) =>
+      r.from === fromCurrency?.value &&
+      r.to === toCurrency?.value
+  );
 
-        if (res.ok && data.data?.transfer_routes) {
-          setRoutes(data.data.transfer_routes); // assign transfer routes
-        } else {
-          alert("Could not load transfer routes.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error loading transfer routes.");
-      } finally {
-        setLoadingRoutes(false);
-      }
-    };
-
-    fetchRoutes();
-  }, [token]);
-
-  // ---------------------------------------------------
-  // 2️⃣ FIND THE ROUTE BASED ON SELECTED CURRENCIES
-  // ---------------------------------------------------
-  const getRouteId = () => {
-    if (!fromCurrency || !toCurrency) return null;
-
-    const route = routes.find(
-      (r) =>
-        r.sending_country === fromCurrency.value &&
-        r.receiving_country === toCurrency.value
-    );
-
-    return route ? route.id : null;
-  };
-
-  // ---------------------------------------------------
-  // 3️⃣ HANDLE FORM SUBMIT
-  // ---------------------------------------------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!amount || !fromCurrency || !toCurrency) {
-      alert("Please fill out all fields");
+      alert("Please fill all fields");
       return;
     }
 
-    const routeId = getRouteId();
-    if (!routeId) {
-      alert("No valid transfer route for the selected currencies.");
+    if (!selectedRoute) {
+      alert("No transfer route available for this currency pair");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch(
+      const res = await fetch(
         "https://api.remitex.co/api/transfers/initiate",
         {
           method: "POST",
@@ -97,40 +51,39 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            transfer_route_id: routeId,
+            transfer_route_id: selectedRoute.id,
             amount: Number(amount),
           }),
         }
       );
 
-      const data = await response.json();
-      console.log("TRANSFER INITIATION RESPONSE:", data);
+      const result = await res.json();
+      console.log("INITIATE RESPONSE:", result);
 
-      if (!response.ok) {
-        alert(
-          data?.message ||
-            data?.errors?.transfer_route_id?.[0] ||
-            "Transfer initiation failed"
-        );
-        return;
+      if (!res.ok) {
+        throw new Error(result?.message || "Transfer failed");
       }
 
-      // Save data for next step
-      setTransferData(data.data);
+      /**
+       * 🔑 STORE DATA EXACTLY AS API RETURNS IT
+       */
+      const transferData = {
+        ...result.data,
+        inputAmount: amount,
+        fromCurrency: fromCurrency.value,
+        toCurrency: toCurrency.value,
+      };
 
-      // Go to next step/page
+      setTransferData(transferData);
       setCurrentStep(2);
     } catch (err) {
       console.error(err);
-      alert("Network error, please try again.");
+      alert(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ---------------------------------------------------
-  // Currency Option Renderer
-  // ---------------------------------------------------
   const customOption = ({ label, value }) => (
     <div className="flex items-center gap-2">
       <CurrencyFlag currency={value} size="sm" />
@@ -139,71 +92,44 @@ const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
   );
 
   return (
-    <div className="grid place-content-center mt-6 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-[#E4E7EC] p-6 rounded-2xl shadow-md w-[350px] sm:w-[400px] space-y-4"
-      >
-        <h1
-          style={{ fontFamily: "DM Sans" }}
-          className="text-2xl font-semibold text-center mb-2"
+    <div className="grid place-content-center mt-6 px-4 font-Outfit">
+      <div className="bg-[#E4E7EC] p-6 rounded-2xl w-[360px] space-y-4">
+        <h1 className="text-xl font-semibold text-center font-Outfit">Transfer</h1>
+
+        <Select
+          options={currencyOptions}
+          value={fromCurrency}
+          onChange={setFromCurrency}
+          placeholder="From"
+          formatOptionLabel={customOption}
+        />
+
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="Amount"
+          min={0.01}
+          step={0.01}
+          className="w-full p-2 border rounded-lg"
+        />
+
+        <Select
+          options={currencyOptions}
+          value={toCurrency}
+          onChange={setToCurrency}
+          placeholder="To"
+          formatOptionLabel={customOption}
+        />
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full bg-[#0328EE] text-white py-2 rounded-lg"
         >
-          Transfer
-        </h1>
-
-        {loadingRoutes ? (
-          <p className="text-center text-sm">Loading routes...</p>
-        ) : (
-          <>
-            {/* From Currency */}
-            <div className="space-y-2" style={{ fontFamily: "Outfit" }}>
-              <label className="text-sm font-medium">From</label>
-              <Select
-                options={currencyOptions}
-                value={fromCurrency}
-                onChange={setFromCurrency}
-                placeholder="Select currency"
-                formatOptionLabel={customOption}
-              />
-
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
-                className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-                min={0.01}
-              />
-            </div>
-
-            {/* Rate Placeholder */}
-            <p className="bg-[#E4F6F2] text-sm text-center py-2 rounded-lg font-medium">
-              Select currencies to see rate
-            </p>
-
-            {/* To Currency */}
-            <div className="space-y-2" style={{ fontFamily: "Outfit" }}>
-              <label className="text-sm font-medium">To</label>
-              <Select
-                options={currencyOptions}
-                value={toCurrency}
-                onChange={setToCurrency}
-                placeholder="Select currency"
-                formatOptionLabel={customOption}
-              />
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              className="w-full bg-[#0328EE] text-white py-2 rounded-lg font-semibold hover:bg-[#021fc1] transition-all"
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Continue"}
-            </button>
-          </>
-        )}
-      </form>
+          {loading ? "Processing..." : "Continue"}
+        </button>
+      </div>
     </div>
   );
 };

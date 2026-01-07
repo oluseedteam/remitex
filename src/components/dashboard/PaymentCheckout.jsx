@@ -1,98 +1,140 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 
-const PaymentCheckout = ({ setCurrentStep }) => {
-  const [copiedField, setCopiedField] = useState("");
+const PaymentCheckout = ({ setCurrentStep, transferData }) => {
+  const [loading, setLoading] = useState(true);
+  const [depositData, setDepositData] = useState(null);
+  const [copied, setCopied] = useState("");
 
-  const accountDetails = {
-    holder: "John Doe",
-    number: "0123456789",
-    bank: "GTBank",
-    wireRouting: "058",
-    achRouting: "111000025",
-    accountType: "Checking",
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchDepositInstructions = async () => {
+      try {
+        const recipientData = JSON.parse(localStorage.getItem("recipientData"));
+        const recipientId = recipientData?.recipient?.id;
+        const transferRouteId = transferData?.transfer_summary?.transfer_route_id;
+
+        // 🔍 HARD CHECK
+        if (!recipientId || !transferRouteId) {
+          console.error("MISSING DATA", { recipientId, transferRouteId });
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(
+          "https://api.remitex.co/api/transfers/deposit-instructions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              transfer_route_id: transferRouteId,
+              recipient_id: recipientId,
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.message || "Failed to fetch deposit instructions");
+        }
+
+        console.log("DEPOSIT RESPONSE:", data);
+        setDepositData(data.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepositInstructions();
+  }, [transferData, token]);
+
+  const copy = (value, key) => {
+    if (!value) return;
+    navigator.clipboard.writeText(value.toString());
+    setCopied(key);
+    setTimeout(() => setCopied(""), 1500);
   };
 
-  // Function to copy text
-  const handleCopy = (value, field) => {
-    navigator.clipboard.writeText(value);
-    setCopiedField(field);
+  if (loading) {
+    return (
+      <p className="text-center mt-10 text-gray-600">
+        Loading deposit instructions…
+      </p>
+    );
+  }
 
-    // Show alert
-    alert(`${field.replace(/([A-Z])/g, " $1")} copied to clipboard!`);
+  if (!depositData) {
+    return (
+      <p className="text-center mt-10 text-red-500">
+        Unable to load deposit instructions
+      </p>
+    );
+  }
 
-    // Reset highlight
-    setTimeout(() => setCopiedField(""), 2000);
-  };
-
-  // Helper for rendering each field
-  const renderField = (label, value, fieldKey) => (
-    <div className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm">
-      <div>
-        <p className="text-xs text-gray-500" style={{ fontFamily: "Outfit" }}>
-          {label}
-        </p>
-        <p
-          className="text-sm font-semibold text-gray-800"
-          style={{ fontFamily: "DM Sans" }}
-        >
-          {value}
-        </p>
-      </div>
-      <Copy
-        size={24}
-        className={`w-10 h-10 p-2 rounded-full cursor-pointer transition-colors ${
-          copiedField === fieldKey
-            ? "text-green-500 bg-[#D1FADF]"
-            : "text-[#F2F4F7] bg-[#0328EE]"
-        } hover:text-green-600`}
-        onClick={() => handleCopy(value, fieldKey)}
-      />
-    </div>
-  );
+  // 🔹 Extract important info safely
+  const {
+    transaction,
+    deposit_account,
+    instructions,
+    amount_sent,
+    amount_received,
+    currency,
+  } = depositData;
 
   return (
-    <div className="grid place-content-center mt-8 px-4">
-      {/* Header Section */}
+    <div className="grid place-content-center mt-8 px-4 font-Outfit">
       <div className="text-center mb-6">
-        <h1
-          className="text-2xl font-semibold text-gray-800"
-          style={{ fontFamily: "DM Sans" }}
-        >
-          Send Money Via Bank Transfer
-        </h1>
-        <p
-          className="text-sm text-gray-600 mt-1"
-          style={{ fontFamily: "Outfit" }}
-        >
-          Make a transfer to the account details below.
+        <h1 className="text-2xl font-semibold">Bank Transfer Instructions</h1>
+        {instructions && <p className="text-sm text-gray-600 mt-1">{instructions}</p>}
+        <p className="text-sm text-gray-600 mt-1">
+          Amount to send: <strong>{amount_sent} {currency}</strong>
+        </p>
+        <p className="text-sm text-gray-600 mt-1">
+          Amount recipient will receive: <strong>{amount_received} {currency}</strong>
         </p>
       </div>
 
-      {/* Account Details Card */}
-      <div className="bg-[#E4E7EC] p-6 rounded-2xl shadow-md w-[350px] sm:w-[420px] space-y-5">
-        {renderField("Account Holder", accountDetails.holder, "holder")}
-        {renderField("Account Number", accountDetails.number, "number")}
-        {renderField("Bank Name", accountDetails.bank, "bank")}
-        {renderField("Wire Routing", accountDetails.wireRouting, "wireRouting")}
-        {renderField("ACH Routing", accountDetails.achRouting, "achRouting")}
-        {renderField("Account Type", accountDetails.accountType, "accountType")}
+      <div className="bg-[#E4E7EC] p-6 rounded-2xl w-[360px] space-y-4">
+        {[
+          ["Transaction ID", transaction?.id, "transaction"],
+          ["Bank Name", deposit_account?.bank_name, "bank_name"],
+          ["Account Number", deposit_account?.account_number, "account_number"],
+          ["Routing Number", deposit_account?.routing_number, "routing_number"],
+          ["SWIFT / BIC", deposit_account?.swift_code, "swift_code"],
+          ["Payment Reference", transaction?.reference, "reference"],
+        ].map(([label, value, key]) => (
+          <div
+            key={key}
+            className="flex justify-between items-center bg-white p-3 rounded-lg"
+          >
+            <div>
+              <p className="text-[15px] text-gray-500">{label}</p>
+              <p className="text-[16px] font-semibold">{value || "N/A"}</p>
+            </div>
+            {value && (
+              <Copy
+                className={`w-9 h-9 p-2 rounded-full cursor-pointer ${
+                  copied === key
+                    ? "bg-green-100 text-green-600"
+                    : "bg-[#0328EE] text-white"
+                }`}
+                onClick={() => copy(value, key)}
+              />
+            )}
+          </div>
+        ))}
 
-        {/* Info note */}
-        <p
-          className="text-xs text-gray-600 text-center mt-3"
-          style={{ fontFamily: "Outfit" }}
-        >
-          Please ensure the name and account number match before sending your
-          payment.
-        </p>
-
-        {/* Submit Button */}
         <button
-          type="button"
-          onClick={() => setCurrentStep(3)}
-          className="w-full bg-[#0328EE] text-white py-2 rounded-lg font-semibold hover:bg-[#021fc1] transition-all"
-          style={{ fontFamily: "Outfit" }}
+          onClick={() => setCurrentStep(4)}
+          className="w-full bg-[#0328EE] text-white py-2.5 rounded-lg font-semibold"
         >
           I have made the payment
         </button>

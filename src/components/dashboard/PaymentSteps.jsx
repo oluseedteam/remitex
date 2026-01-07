@@ -4,8 +4,9 @@ import { Check } from "lucide-react";
 const PaymentSteps = ({ currentStep = 1 }) => {
   const steps = [
     { id: 1, label: "Select Currency" },
-    { id: 2, label: "Account Details" },
-    { id: 3, label: "Complete Payment" },
+    { id: 2, label: "Recipent Details" },
+    { id: 3, label: "Make Payment" },
+    { id: 4, label: "Upload Proof" },
   ];
 
   return (

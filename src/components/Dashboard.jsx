@@ -9,19 +9,17 @@ const Dashboard = () => {
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
-    <div className="flex min-h-screen bg-[#fffff]">
-      {/* Sidebar for all screens */}
-      <Sidebar
-        isSidebarOpen={isSidebarOpen}
-        toggleSidebar={toggleSidebar}
-      />
+    <div className="flex h-screen bg-white overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-      {/* Navbar + Content */}
-      <div className="flex-1 flex flex-col">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Navbar */}
         <Navbar toggleSidebar={toggleSidebar} />
 
-        {/* Main Content */}
-        <main className="flex-1 p-6">
+        {/* Scrollable content */}
+        <main className="flex-1 overflow-auto p-6 bg-gray-50">
           <Outlet />
         </main>
       </div>
