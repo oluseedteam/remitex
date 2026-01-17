@@ -22,7 +22,8 @@
     "react-select": "^5.10.2",
     "react-select-country-list": "^2.2.3",
     "recharts": "^3.5.1",
-    "tailwindcss": "^4.1.17"
+    "tailwindcss": "^4.1.17",
+    "world-countries": "^5.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

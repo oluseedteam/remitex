@@ -21,6 +21,7 @@ import ProfilePage from './components/dashboard/ProfilePage'
 import ForgotPassword from './pages/ForgotPassword'
 import ChangePassword from './components/dashboard/ChangePassword'
 import DashboardMain from './components/dashboard/DashboardMain'
+import AdminLogin from './components/admin/pages/AdminLogin'
 
 const App = () => (
   <Router>
@@ -31,6 +32,7 @@ const App = () => (
       <Route path='/contact' element={<Contact />} />
       <Route path='/register' element={<Register/>} />
       <Route path='/login' element={<Login/>} />
+      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
       <Route path="/dashboard" element={<Dashboard />}>

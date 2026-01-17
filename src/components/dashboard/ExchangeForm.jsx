@@ -1,137 +1,195 @@
-import React, { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Select from "react-select";
-import CurrencyFlag from "react-currency-flags";
+import ReactCountryFlag from "react-country-flag";
 
-const ExchangeForm = ({ setCurrentStep, setTransferData }) => {
+const API_BASE = "https://api.remitex.co/api";
+
+// Helper: convert alpha-3 codes to alpha-2 (if your API gives alpha-3)
+const alpha3ToAlpha2 = {
+  USA: "US",
+  NGA: "NG",
+  CAN: "CA",
+  GBR: "GB",
+  // Add more as needed
+};
+
+export default function ExchangeForm({ onNext, setTransferData }) {
+  const [fromCountry, setFromCountry] = useState(null);
+  const [toCountry, setToCountry] = useState(null);
   const [amount, setAmount] = useState("");
-  const [fromCurrency, setFromCurrency] = useState(null);
-  const [toCurrency, setToCurrency] = useState(null);
-  const [loading, setLoading] = useState(false);
+
+  const [routes, setRoutes] = useState([]);
+  const [loadingRoutes, setLoadingRoutes] = useState(true);
+  const [error, setError] = useState("");
 
   const token = localStorage.getItem("token");
 
-  const currencyOptions = [
-    { value: "CAD", label: "CAD" },
-    { value: "NGN", label: "NGN" },
-  ];
-
-  // TEMP routes (must match backend IDs)
-  const routes = [
-    { id: 1, from: "NGN", to: "CAD" },
-    { id: 2, from: "CAD", to: "NGN" },
-  ];
-
-  const selectedRoute = routes.find(
-    (r) =>
-      r.from === fromCurrency?.value &&
-      r.to === toCurrency?.value
-  );
-
-  const handleSubmit = async () => {
-    if (!amount || !fromCurrency || !toCurrency) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    if (!selectedRoute) {
-      alert("No transfer route available for this currency pair");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(
-        "https://api.remitex.co/api/transfers/initiate",
-        {
-          method: "POST",
+  // Fetch transfer routes
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/transfer-routes?per_page=1000`, {
           headers: {
-            "Content-Type": "application/json",
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            transfer_route_id: selectedRoute.id,
-            amount: Number(amount),
-          }),
-        }
-      );
+        });
+        if (!res.ok) throw new Error("Failed to fetch transfer routes");
 
-      const result = await res.json();
-      console.log("INITIATE RESPONSE:", result);
-
-      if (!res.ok) {
-        throw new Error(result?.message || "Transfer failed");
+        const data = await res.json();
+        const list = Array.isArray(data?.data?.data) ? data.data.data : data.data || [];
+        setRoutes(list);
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load transfer routes");
+      } finally {
+        setLoadingRoutes(false);
       }
+    };
 
-      /**
-       * 🔑 STORE DATA EXACTLY AS API RETURNS IT
-       */
-      const transferData = {
-        ...result.data,
-        inputAmount: amount,
-        fromCurrency: fromCurrency.value,
-        toCurrency: toCurrency.value,
-      };
+    if (token) fetchRoutes();
+    else setError("Please login to continue");
+  }, [token]);
 
-      setTransferData(transferData);
-      setCurrentStep(2);
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Extract unique countries
+  const countries = useMemo(() => {
+    const map = new Map();
+    routes.forEach((r) => {
+      [r.sending_country, r.receiving_country].forEach((c) => {
+        if (!c) return;
+        let code = c.code.toUpperCase();
+        if (code.length === 3 && alpha3ToAlpha2[code]) code = alpha3ToAlpha2[code];
 
-  const customOption = ({ label, value }) => (
+        if (!map.has(c.id)) map.set(c.id, { ...c, code });
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [routes]);
+
+  // Options for react-select
+  const options = useMemo(() => countries.map(c => ({
+    value: c.id,
+    label: c.name,
+    code: c.code,
+    currency: c.currency_code,
+    currencyName: c.currency_name,
+  })), [countries]);
+
+  const formatOptionLabel = ({ label, code, currency, currencyName }) => (
     <div className="flex items-center gap-2">
-      <CurrencyFlag currency={value} size="sm" />
-      <span>{label}</span>
-    </div>
-  );
-
-  return (
-    <div className="grid place-content-center mt-6 px-4 font-Outfit">
-      <div className="bg-[#E4E7EC] p-6 rounded-2xl w-[360px] space-y-4">
-        <h1 className="text-xl font-semibold text-center font-Outfit">Transfer</h1>
-
-        <Select
-          options={currencyOptions}
-          value={fromCurrency}
-          onChange={setFromCurrency}
-          placeholder="From"
-          formatOptionLabel={customOption}
-        />
-
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Amount"
-          min={0.01}
-          step={0.01}
-          className="w-full p-2 border rounded-lg"
-        />
-
-        <Select
-          options={currencyOptions}
-          value={toCurrency}
-          onChange={setToCurrency}
-          placeholder="To"
-          formatOptionLabel={customOption}
-        />
-
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full bg-[#0328EE] text-white py-2 rounded-lg"
-        >
-          {loading ? "Processing..." : "Continue"}
-        </button>
+      <ReactCountryFlag countryCode={code} svg style={{ width: "1.5em", height: "1.5em" }} title={label} />
+      <div>
+        <span className="font-medium">{label}</span>
+        {currency && <span className="text-sm text-gray-500"> ({currency} - {currencyName})</span>}
       </div>
     </div>
   );
-};
 
-export default ExchangeForm;
+  // Match route
+  const matchedRoute = useMemo(() => {
+    if (!fromCountry || !toCountry) return null;
+    return routes.find(r =>
+      String(r.sending_country_id) === String(fromCountry.value) &&
+      String(r.receiving_country_id) === String(toCountry.value)
+    );
+  }, [fromCountry, toCountry, routes]);
+
+  const handleSubmit = () => {
+    if (!fromCountry || !toCountry || !amount) {
+      alert("Please fill all fields");
+      return;
+    }
+    if (!matchedRoute) {
+      alert(`No route from ${fromCountry.label} to ${toCountry.label}`);
+      return;
+    }
+    if (Number(amount) < 100) {
+      alert("Minimum amount is 100");
+      return;
+    }
+
+    const transferDataObj = {
+      from: fromCountry,
+      to: toCountry,
+      amount: Number(amount),
+      transfer_route_id: matchedRoute.id,
+      sending_country_id: fromCountry.value,
+      receiving_country_id: toCountry.value,
+      exchange_rate: matchedRoute.exchange_rate,
+      commission_percentage: matchedRoute.commission_percentage,
+      route: matchedRoute,
+    };
+
+    setTransferData && setTransferData(transferDataObj);
+    onNext && onNext();
+  };
+
+  return (
+    <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg space-y-4">
+      <h2 className="text-xl font-bold text-center mb-2">Send Money</h2>
+
+      {loadingRoutes && <div className="p-2 bg-blue-50 text-blue-700 rounded">Loading countries...</div>}
+      {error && <div className="p-2 bg-red-50 text-red-700 rounded">{error}</div>}
+
+      <div>
+        <label className="block font-medium mb-1">From Country</label>
+        <Select
+          options={options}
+          value={fromCountry}
+          onChange={setFromCountry}
+          formatOptionLabel={formatOptionLabel}
+          isLoading={loadingRoutes}
+          isDisabled={loadingRoutes || !!error}
+        />
+      </div>
+
+      <div>
+        <label className="block font-medium mb-1">To Country</label>
+        <Select
+          options={options}
+          value={toCountry}
+          onChange={setToCountry}
+          formatOptionLabel={formatOptionLabel}
+          isLoading={loadingRoutes}
+          isDisabled={loadingRoutes || !!error}
+        />
+      </div>
+
+      {fromCountry && toCountry && (
+        <div className={`p-3 rounded border ${matchedRoute ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
+          {matchedRoute ? (
+            <div className="text-green-700 text-sm">
+              ✓ Transfer Route Available
+              <div>Exchange Rate: 1 {fromCountry.currency} = {matchedRoute.exchange_rate} {toCountry.currency}</div>
+              <div>Commission: {matchedRoute.commission_percentage}%</div>
+            </div>
+          ) : (
+            <div className="text-yellow-700 text-sm">⚠️ No route available</div>
+          )}
+        </div>
+      )}
+
+      <div>
+        <label className="block font-medium mb-1">Amount to Send</label>
+        <input
+          type="number"
+          min="100"
+          step="0.01"
+          placeholder="Enter amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full p-2 border rounded"
+          disabled={!matchedRoute}
+        />
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={!matchedRoute || !amount || Number(amount) < 100 || loadingRoutes}
+        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+      >
+        Continue
+      </button>
+    </div>
+  );
+}

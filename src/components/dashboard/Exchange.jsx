@@ -1,43 +1,50 @@
-import React, { useState } from 'react'
-import PaymentSteps from './PaymentSteps'
-import ExchangeForm from './ExchangeForm'
-import AccountDetails from './AccountDetails'
-import PaymentCheckout from './PaymentCheckout'
-import UploadProof from './UploadProof'
+import { useEffect, useState } from "react";
+import PaymentSteps from "../dashboard/PaymentSteps";
+import ExchangeForm from "../dashboard/ExchangeForm";
+import RecipentDetailsForm from "./RecipentDetailsForm";
+import ReviewConfirm from "./ReviewConfirm";
+import DepositInfo from "./DepositInfo";
 
 const Exchange = () => {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [transferData, setTransferData] = useState(null) // ✅ ADD THIS
+  const [step, setStep] = useState(1);
+  const [transferData, setTransferData] = useState({});
+  const [token, setToken] = useState(
+    typeof window !== "undefined" ? localStorage.getItem("token") : ""
+  );
 
   return (
-    <div>
-      <PaymentSteps currentStep={currentStep} />
+    <div className="min-h-screen bg-blue-50 p-4 font-Outfit">
+      <PaymentSteps currentStep={step} />
 
-      {currentStep === 1 && (
+      {step === 1 && (
         <ExchangeForm
-          setCurrentStep={setCurrentStep}
-          setTransferData={setTransferData} // ✅ now defined
+          onNext={() => setStep(2)}
+          transferData={transferData}
+          setTransferData={setTransferData}
         />
       )}
 
-      {currentStep === 2 && (
-        <AccountDetails
-          setCurrentStep={setCurrentStep}
-          transferData={transferData} // ✅ now defined
+      {step === 2 && (
+        <RecipentDetailsForm
+          onNext={() => setStep(3)}
+          onBack={() => setStep(1)}
+          transferData={transferData}
+          setTransferData={setTransferData}
+          token={token}
         />
       )}
 
-      {currentStep === 3 && (
-        <PaymentCheckout
-          setCurrentStep={setCurrentStep}
-          transferData={transferData} 
-        />)}
-      
-      {currentStep === 4 && (
-        <UploadProof/>
+      {step === 3 && (
+        <ReviewConfirm
+          onNext={() => setStep(4)}
+          onBack={() => setStep(2)}
+          transferData={transferData}
+        />
       )}
+
+      {step === 4 && <DepositInfo transferData={transferData} />}
     </div>
-  )
-}
+  );
+};
 
-export default Exchange
+export default Exchange;
