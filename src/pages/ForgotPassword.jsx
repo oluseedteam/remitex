@@ -13,7 +13,7 @@ const ForgotPassword = () => {
 
     try {
       const token = localStorage.getItem("token"); // optional
-      const response = await fetch("https://api.remitex.co/api/forgot-password", {
+      const response = await fetch("https://api-remitex.wetfieldinc.com/api/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

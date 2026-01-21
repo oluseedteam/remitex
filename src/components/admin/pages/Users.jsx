@@ -17,10 +17,10 @@ const Users = () => {
       setLoading(true);
       setError("");
       
-      let url = "https://api.remitex.co/api/admin/users/all";
+      let url = "https://api-remitex.wetfieldinc.com/api/admin/users/all";
       
       if (tab === "Pending") {
-        url = "https://api.remitex.co/api/admin/users/pending";
+        url = "https://api-remitex.wetfieldinc.com/api/admin/users/pending";
       }
 
       const res = await fetch(url, {

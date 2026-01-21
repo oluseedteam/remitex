@@ -25,7 +25,7 @@ const CountriesPage = () => {
   const fetchCountries = async () => {
     try {
       setLoading(true);
-      const response = await fetch("https://api.remitex.co/api/admin/countries", {
+      const response = await fetch("https://api-remitex.wetfieldinc.com/api/admin/countries", {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -86,8 +86,8 @@ const CountriesPage = () => {
   // Submit Create or Update
   const handleSubmit = async () => {
     const url = editingCountry
-      ? `https://api.remitex.co/api/admin/countries/${editingCountry.id}`
-      : "https://api.remitex.co/api/admin/countries";
+      ? `https://api-remitex.wetfieldinc.com/api/admin/countries/${editingCountry.id}`
+      : "https://api-remitex.wetfieldinc.com/api/admin/countries";
 
     const method = editingCountry ? "PUT" : "POST";
 

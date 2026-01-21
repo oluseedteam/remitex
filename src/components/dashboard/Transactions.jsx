@@ -21,7 +21,7 @@ const Transactions = () => {
       if (statusFilter) params.append("status", statusFilter);
 
       const response = await fetch(
-        `https://api.remitex.co/api/transactions?${params.toString()}`,
+        `https://api-remitex.wetfieldinc.com/api/transactions?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -47,7 +47,7 @@ const Transactions = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `https://api.remitex.co/api/transactions/${transactionId}`,
+        `https://api-remitex.wetfieldinc.com/api/transactions/${transactionId}`,
         {
           method: "GET",
           headers: {

@@ -53,7 +53,7 @@ const ChangePassword = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("https://api.remitex.co/api/change-password", {
+      const response = await fetch("https://api-remitex.wetfieldinc.com/api/change-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

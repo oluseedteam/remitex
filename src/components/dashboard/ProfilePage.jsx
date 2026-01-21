@@ -20,7 +20,7 @@ const ProfilePage = () => {
     setFetchingUser(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("https://api.remitex.co/api/user/me", {
+      const response = await fetch("https://api-remitex.wetfieldinc.com/api/user/me", {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -87,7 +87,7 @@ const ProfilePage = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        "https://api.remitex.co/api/profile/update",
+        "https://api-remitex.wetfieldinc.com/api/profile/update",
         {
           method: "POST",
           headers: {

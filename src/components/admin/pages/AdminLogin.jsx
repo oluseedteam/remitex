@@ -40,7 +40,7 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      const url = 'https://api.remitex.co/api/auth/admin/login';
+      const url = 'https://api-remitex.wetfieldinc.com/api/auth/admin/login';
       const options = {
         method: 'POST',
         headers: {

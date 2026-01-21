@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import Select from "react-select";
 import ReactCountryFlag from "react-country-flag";
 
-const API_BASE = "https://api.remitex.co/api";
+const API_BASE = "https://api-remitex.wetfieldinc.com/api";
 
 // Helper: convert alpha-3 codes to alpha-2 (if your API gives alpha-3)
 const alpha3ToAlpha2 = {

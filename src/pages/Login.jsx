@@ -14,7 +14,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("https://api.remitex.co/api/auth/login", {
+      const response = await fetch("https://api-remitex.wetfieldinc.com/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

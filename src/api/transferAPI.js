@@ -1,7 +1,7 @@
 const transferAPI = {
   async getRoutes(token) {
     const response = await fetch(
-      'https://api.remitex.co/api/transfer-routes',
+      'https://api-remitex.wetfieldinc.com/api/transfer-routes',
       {
         headers: {
           Accept: 'application/json',
@@ -19,7 +19,7 @@ const transferAPI = {
 
   async createTransfer(data, token) {
     const response = await fetch(
-      'https://api.remitex.co/api/transfers/create',
+      'https://api-remitex.wetfieldinc.com/api/transfers/create',
       {
         method: 'POST',
         headers: {

@@ -71,7 +71,7 @@ const Register = () => {
     setLoading(true);
     setError('');
 
-    const url = 'https://api.remitex.co/api/auth/register';
+    const url = 'https://api-remitex.wetfieldinc.com/api/auth/register';
     
     const options = {
       method: 'POST',

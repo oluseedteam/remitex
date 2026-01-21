@@ -23,7 +23,7 @@ const PaymentCheckout = ({ setCurrentStep, transferData }) => {
         }
 
         const response = await fetch(
-          "https://api.remitex.co/api/transfers/deposit-instructions",
+          "https://api-remitex.wetfieldinc.com/api/transfers/deposit-instructions",
           {
             method: "POST",
             headers: {

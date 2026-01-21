@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FiGlobe, FiTrendingUp, FiEdit2, FiPlus, FiRefreshCw, FiAlertCircle, FiCheck, FiX, FiArrowRight } from "react-icons/fi";
 
-const API_BASE = "https://api.remitex.co/api/admin";
+const API_BASE = "https://api-remitex.wetfieldinc.com/api/admin";
 
 export default function TransferRoutes() {
   const [routes, setRoutes] = useState([]);
@@ -31,7 +31,7 @@ export default function TransferRoutes() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/transfer-routes`, {
+      const response = await fetch(`${API_BASE}/admin/transfer-routes`, {
         method: "GET",
         headers: {
           Accept: "application/json",

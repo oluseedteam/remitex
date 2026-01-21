@@ -23,7 +23,7 @@ const Transactions = () => {
       if (statusFilter) params.append("status", statusFilter);
 
       const response = await fetch(
-        `https://api.remitex.co/api/admin/transactions?${params.toString()}`,
+        `https://api-remitex.wetfieldinc.com/api/admin/transactions?${params.toString()}`,
         {
           method: "GET",
           headers: {

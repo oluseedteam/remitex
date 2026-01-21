@@ -10,7 +10,7 @@ const Logout = () => {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("https://api.remitex.co/api/logout", {
+      const response = await fetch("https://api-remitex.wetfieldinc.com/api/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

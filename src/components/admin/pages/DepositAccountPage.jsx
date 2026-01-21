@@ -25,7 +25,7 @@ const DepositAccountsPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("https://api.remitex.co/api/admin/deposit-accounts", {
+      const res = await fetch("https://api-remitex.wetfieldinc.com/api/admin/deposit-accounts", {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -87,8 +87,8 @@ const DepositAccountsPage = () => {
 
   const handleSubmit = async () => {
     const url = editingAccount
-      ? `https://api.remitex.co/api/admin/deposit-accounts/${editingAccount.id}`
-      : "https://api.remitex.co/api/admin/deposit-accounts";
+      ? `https://api-remitex.wetfieldinc.com/api/admin/deposit-accounts/${editingAccount.id}`
+      : "https://api-remitex.wetfieldinc.com/api/admin/deposit-accounts";
 
     const method = editingAccount ? "PUT" : "POST";
 
