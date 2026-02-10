@@ -13,7 +13,7 @@ const Exchange = () => {
   );
 
   return (
-    <div className="min-h-screen bg-blue-50 p-4 font-Outfit">
+    <div className="min-h-screen p-4 font-Outfit">
       <PaymentSteps currentStep={step} />
 
       {step === 1 && (

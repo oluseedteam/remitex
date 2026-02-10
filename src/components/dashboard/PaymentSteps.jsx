@@ -14,7 +14,7 @@ const PaymentSteps = ({ currentStep }) => (
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center ${
             currentStep > i
-              ? 'bg-blue-600 text-white'
+              ? 'bg-green-600 text-white'
               : 'bg-gray-200 text-gray-500'
           }`}
         >
